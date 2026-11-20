@@ -1,0 +1,10 @@
+{
+  "slug": "davor-lifeos",
+  "name": "davor-lifeos",
+  "path": "davor-lifeos",
+  "entryService": "traefik",
+  "entryPort": 80,
+  "stripPrefix": true,
+  "compose": "docker-compose.yml",
+  "deployMode": "server"
+}
