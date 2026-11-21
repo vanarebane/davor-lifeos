@@ -7,7 +7,7 @@
 # Secrets (APP_KEY, DB_PASSWORD, API keys) come from the project's .env on l0, which the
 # l0 VS Code extension syncs from the git-ignored .env.l0.
 #
-# web, queue and scheduler run the same image with the same settings: keep them in sync.
+# web, queue, scheduler and migrate run the same image with the same settings: keep them in sync.
 # (No YAML anchors: l0 looks for build: on each service itself.)
 #
 # Local development keeps using docker-compose.yml + docker-compose.dev.yml (Spin).
@@ -43,6 +43,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     # nginx + PHP-FPM (serversideup/php) on plain HTTP; l0 and Plesk handle TLS.
     expose:
       - "8080"
@@ -76,6 +78,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     command: ["php", "/var/www/html/artisan", "queue:work", "--tries=3", "--max-time=3600"]
     stop_signal: SIGTERM
     healthcheck:
@@ -110,8 +114,46 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     command: ["php", "/var/www/html/artisan", "schedule:work"]
     stop_signal: SIGTERM
+    healthcheck:
+      disable: true
+
+  # One-shot: brings the schema up to date before web, queue and scheduler start, so new code
+  # never runs against an old schema. l0 counts a container that exited 0 as fine. (l0.json
+  # after_deploy can't do this: it runs only once every container is up, and queue:work
+  # crashes without its tables. If a migration fails, the deploy fails and the old containers
+  # keep running.)
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.l0
+    restart: "no"
+    env_file: .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://l0.ee/davor-lifeos
+      TRUSTED_PROXIES: 127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      PHP_OPCACHE_ENABLE: "1"
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: lifeos
+      DB_USERNAME: lifeos
+      SESSION_DRIVER: database
+      SESSION_PATH: /davor-lifeos
+      SESSION_COOKIE: davor_lifeos_session
+      SESSION_SECURE_COOKIE: "true"
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["php", "/var/www/html/artisan", "migrate", "--force", "--no-interaction"]
     healthcheck:
       disable: true
 

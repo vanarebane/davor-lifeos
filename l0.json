@@ -10,9 +10,6 @@
   "deployMode": "server",
   "containers": {
     "web": {
-      "after_deploy": [
-        { "name": "Migrate", "command": "php artisan migrate --force" }
-      ],
       "terminal_commands": [
         { "name": "Tinker", "command": "php artisan tinker" },
         {
