@@ -28,6 +28,7 @@ import {
     type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { withoutBasePath } from '@/lib/base-path'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
@@ -120,7 +121,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     }
 
     const isActive = (href: string) => {
-        return url.startsWith(href)
+        return withoutBasePath(url).startsWith(href)
     }
 
     return (

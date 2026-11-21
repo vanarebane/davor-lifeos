@@ -5,6 +5,9 @@ import { createRoot } from 'react-dom/client'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
 import { LoadingIndicator } from './components/shared/loading-indicator'
+import { installBasePath } from './lib/base-path'
+
+installBasePath()
 
 createInertiaApp({
     title: (title) => title ? `${title} - LifeOS` : 'LifeOS',

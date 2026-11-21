@@ -2,9 +2,30 @@
   "slug": "davor-lifeos",
   "name": "davor-lifeos",
   "path": "davor-lifeos",
-  "entryService": "traefik",
-  "entryPort": 80,
+  "entryService": "web",
+  "entryPort": 8080,
   "stripPrefix": true,
-  "compose": "docker-compose.yml",
-  "deployMode": "server"
+  "compose": "docker-compose.l0.yml",
+  "envFile": ".env.l0",
+  "deployMode": "server",
+  "containers": {
+    "web": {
+      "after_deploy": [
+        { "name": "Migrate", "command": "php artisan migrate --force" }
+      ],
+      "terminal_commands": [
+        { "name": "Tinker", "command": "php artisan tinker" },
+        {
+          "name": "Artisan",
+          "command": [
+            { "name": "Migration status", "command": "php artisan migrate:status" },
+            { "name": "Scheduled tasks", "command": "php artisan schedule:list" },
+            { "name": "Failed jobs", "command": "php artisan queue:failed" },
+            { "name": "Retry failed jobs", "command": "php artisan queue:retry all" },
+            { "name": "Clear caches", "command": "php artisan optimize:clear" }
+          ]
+        }
+      ]
+    }
+  }
 }

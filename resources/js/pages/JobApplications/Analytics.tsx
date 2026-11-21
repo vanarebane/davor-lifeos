@@ -6,6 +6,7 @@ import { StatCard } from '@/components/shared/stat-card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { DatePicker } from '@/components/shared/date-picker'
 import { Button } from '@/components/ui/button'
+import { withBasePath } from '@/lib/base-path'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Table,
@@ -103,7 +104,7 @@ export default function JobApplicationAnalytics({
     }, [localDateFrom, localDateTo])
 
     const handleExport = useCallback(() => {
-        window.location.href = `/job-applications/analytics/export?date_from=${localDateFrom}&date_to=${localDateTo}`
+        window.location.href = withBasePath(`/job-applications/analytics/export?date_from=${localDateFrom}&date_to=${localDateTo}`)
     }, [localDateFrom, localDateTo])
 
     const funnelEntries = Object.values(funnel)

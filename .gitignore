@@ -3,6 +3,7 @@
 .env
 .env.backup
 .env.production
+.env.l0
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -29,3 +30,4 @@ Thumbs.db
 .cloud/
 .ai/
 .playwright-mcp/
+.l0/

@@ -1,0 +1,47 @@
+# Image for the l0 app manager (docker-compose.l0.yml). l0 builds it from a plain git
+# checkout, so Composer dependencies and the Vite build are produced here.
+# Local development and Spin keep using ./Dockerfile.
+
+############################################
+# Frontend assets
+############################################
+FROM node:22-slim AS assets
+
+WORKDIR /app
+
+# l0 serves the app under /<path>/; Vite bakes this prefix into chunk and CSS asset URLs.
+ARG ASSET_URL=/davor-lifeos
+ENV ASSET_URL=${ASSET_URL} \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
+# pnpm version comes from package.json "packageManager".
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm run build
+
+############################################
+# PHP application: nginx + PHP-FPM on port 8080
+############################################
+FROM serversideup/php:8.5-fpm-nginx-alpine
+
+USER root
+RUN install-php-extensions gd intl
+
+WORKDIR /var/www/html
+
+COPY --chown=www-data:www-data composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --no-autoloader --no-scripts
+
+COPY --chown=www-data:www-data . .
+COPY --from=assets --chown=www-data:www-data /app/public/build ./public/build
+
+# storage/app is a volume at runtime; the relative link replaces `php artisan storage:link`.
+RUN composer dump-autoload --no-dev --optimize --no-interaction \
+    && ln -sfn ../storage/app/public public/storage \
+    && chown -R www-data:www-data bootstrap/cache storage
+
+USER www-data
